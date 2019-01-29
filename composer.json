@@ -1,0 +1,22 @@
+{
+    "name": "dblaci/data",
+    "type": "library",
+    "description": "Database connections",
+    "keywords": ["PDO", "DB"],
+    "homepage": "",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "László Szalma",
+            "email": "dblaci@dblaci.hu"
+        }
+    ],
+    "require": {
+        "php": ">=7.1.0",
+        "ParticleBits/pdo": "~2.0"
+    },
+    "autoload": {
+        "psr-4": { "DBLaci\\Data\\": "src/" }
+    },
+    "minimum-stability": "dev"
+}
