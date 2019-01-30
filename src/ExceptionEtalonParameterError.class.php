@@ -3,9 +3,8 @@
 namespace DBLaci\Data;
 
 /**
- * Description of ExceptionEtalonParameterError
+ * Thrown on missing entry in the database. This is not necessarily means failure or error.
  *
- * @author dblaci
  */
 class ExceptionEtalonParameterError extends \Exception
 {

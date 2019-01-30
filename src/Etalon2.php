@@ -11,6 +11,9 @@ use Pb\PDO\Database;
  */
 abstract class Etalon2
 {
+    /**
+     * this MUST be overridden
+     */
     const TABLE = 'please.set';
     /**
      * can be overridden if needed - autoincrementation is assumed
@@ -30,6 +33,19 @@ abstract class Etalon2
      * @var string
      */
     public $id;
+    /**
+     * add to dbColumns if you want this to be set automatically
+     *
+     * @var string|null timestamp default null
+     */
+    protected $created_at;
+    /**
+     * add to dbColumns if you want this to be set automatically
+     *
+     * @var string|null timestamp default null
+     */
+    protected $updated_at;
+
     /**
      * table columns
      *
@@ -181,6 +197,26 @@ abstract class Etalon2
     }
 
     /**
+     * if the class uses the standard updated_at column, we update it on change
+     *
+     * @return bool
+     */
+    private function hasUpdatedAtColumn(): bool
+    {
+        return in_array('created_at', static::$dbColumns);
+    }
+
+    /**
+     * if the class uses the standard created_at column, we set it on insert
+     *
+     * @return bool
+     */
+    private function hasCreatedAtColumn(): bool
+    {
+        return in_array('created_at', static::$dbColumns);
+    }
+
+    /**
      * you can code validation here if you want before inserting
      *
      * @abstract
@@ -189,7 +225,9 @@ abstract class Etalon2
      */
     protected function onBeforeInsert()
     {
-
+        if ($this->hasCreatedAtColumn()) {
+            $this->created_at = date('Y-m-d H:i:s');
+        }
     }
 
     /**
@@ -223,13 +261,19 @@ abstract class Etalon2
     }
 
     /**
-     * make additional changes before save (on change) - for example updated_at column
+     * make additional changes before save (on change)
+     * please call the parent if you override and return true if the parent returns true.
+     * but don't return false if the parent returns false - if other changes were made.
      *
      * @return boolean must return true if changes were made!
      * @throws \Exception throw error if you want, for example for validation purposes
      */
     protected function onChangeBeforeSave(): bool
     {
+        if ($this->hasCreatedAtColumn()) {
+            $this->created_at = date('Y-m-d H:i:s');
+            return true;
+        }
         return false;
     }
 
@@ -239,7 +283,7 @@ abstract class Etalon2
      * @param array $changeList [column => [0 => oldvalue, 1 => newvalue]...]
      * @return void
      */
-    protected function onChangeAfterSave($changeList)
+    protected function onChangeAfterSave(array $changeList)
     {
 
     }
@@ -459,7 +503,7 @@ abstract class Etalon2
         if (array_key_exists($key, static::$cacheByCriteria[$criteria_key])) {
             return static::$cacheByCriteria[$criteria_key][$key];
         } else {
-            throw new \Exception('Not found in cache: ' .$criteria_key . ':' . $key);
+            throw new \Exception('Not found in cache: ' . $criteria_key . ':' . $key);
         }
     }
 
