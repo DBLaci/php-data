@@ -270,8 +270,8 @@ abstract class Etalon2
      */
     protected function onChangeBeforeSave(): bool
     {
-        if ($this->hasCreatedAtColumn()) {
-            $this->created_at = date('Y-m-d H:i:s');
+        if ($this->hasUpdatedAtColumn()) {
+            $this->updated_at = date('Y-m-d H:i:s');
             return true;
         }
         return false;
