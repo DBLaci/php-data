@@ -129,7 +129,7 @@ abstract class Etalon2
      * @throws \Exception
      * @throws ExceptionEtalonParameterError
      */
-    public static function getInstanceByID(int $id): self
+    public static function getInstanceByID(int $id)
     {
         $dbm = static::getDB();
         $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($id);
@@ -146,9 +146,9 @@ abstract class Etalon2
      * you can override for differentiate your class
      *
      * @param array $row
-     * @return self
+     * @return static
      */
-    public static function getInstanceFromRow($row): self
+    public static function getInstanceFromRow($row)
     {
         return static::getInstanceFromRowBase($row);
     }
@@ -159,7 +159,7 @@ abstract class Etalon2
      * @param array $row
      * @return self
      */
-    protected static function getInstanceFromRowBase($row): self
+    protected static function getInstanceFromRowBase($row)
     {
         $_t = new static;
         if (!$row) {
@@ -409,7 +409,7 @@ abstract class Etalon2
      * @param \static $old
      * @return \static
      */
-    public static function getInstanceNewFromExisting(self $old): self
+    public static function getInstanceNewFromExisting(self $old)
     {
         $t = new static;
         foreach (static::$dbColumns as $col) {
@@ -503,10 +503,10 @@ abstract class Etalon2
      *
      * @param string $criteria_key
      * @param string $key
-     * @return \static
+     * @return static
      * @throws \Exception
      */
-    protected static function getInstanceFromCache(string $criteria_key, string $key): self
+    protected static function getInstanceFromCache(string $criteria_key, string $key)
     {
         if (!isset(static::$cacheByCriteria) || !array_key_exists($criteria_key, static::$cacheByCriteria)) {
             throw new \Exception('Empty cache on criteria key: ' . $criteria_key);
