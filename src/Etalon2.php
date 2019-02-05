@@ -309,8 +309,8 @@ abstract class Etalon2
         $this->_newRecord = false;
         if (!$this->exists()) {
             if ($insert) {
-                $this->onBeforeInsert(); //kivételt dobhat
-                $this->insert();//kivételt dobhat
+                $this->onBeforeInsert();
+                $this->insert();
                 return;
             } else {
                 throw new \Exception('insert not allowed');
@@ -361,7 +361,7 @@ abstract class Etalon2
         if (isset($this->id_to_set)) {
             $insert[static::COL_ID] = $this->id_to_set;
         }
-        $this->id = static::getDB()->insert($insert)->into(static::TABLE)->execute(true);
+        $this->id = (int)static::getDB()->insert($insert)->into(static::TABLE)->execute(true);
         // every column is changed.
         $this->saveDiff = [];
         foreach (static::$dbColumns as $col) {
