@@ -203,7 +203,7 @@ abstract class Etalon2
      */
     private function hasUpdatedAtColumn(): bool
     {
-        return in_array('created_at', static::$dbColumns);
+        return in_array('updated_at', static::$dbColumns);
     }
 
     /**
