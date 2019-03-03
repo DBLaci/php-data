@@ -24,13 +24,13 @@ abstract class Etalon2
      * table column properties
      *
      * autoamtically with php cli:
-     * include_once('config.php');echo "    public \$".implode(" = '';\n    public \$", Site::getDBM()->getTableFields('tools'))." = '';\n";
+     * include_once('config.php');echo "    public \$".implode(" = '';\n    public \$", Site::getDB()->getTableFields('tools'))." = '';\n";
      */
 
     /**
      * mandatory table id column (not necessarily equals 'id' see COL_ID const)
      *
-     * @var string
+     * @var int
      */
     public $id;
     /**
@@ -47,10 +47,17 @@ abstract class Etalon2
     protected $updated_at;
 
     /**
+     * soft delete bool
+     *
+     * @var int
+     */
+    protected $deleted = 0;
+
+    /**
      * table columns
      *
      * autoamtically with php cli:
-     * include_once('config.php');echo "    '".implode("',\n    '", Site::getDBM()->getTableFields('tools'))."'\n";
+     * include_once('config.php');echo "    '".implode("',\n    '", Site::getDB()->getTableFields('tools'))."'\n";
      *
      * @var string[]
      */
@@ -59,9 +66,9 @@ abstract class Etalon2
     ];
 
     /**
-     * you can set the needed id on insert. this is discouraged tough.
+     * you can set the needed id on insert. this is bad practice tough.
      *
-     * @var string
+     * @var int
      */
     protected $id_to_set;
 
@@ -99,12 +106,12 @@ abstract class Etalon2
      *
      * @return Database
      */
-    protected static function getDBM(): Database
+    protected static function getDB(): Database
     {
         if (isset(static::$cacheDBM)) {
             return static::$cacheDBM;
         }
-        return static::$cacheDBM = static::getDBMFinal();
+        return static::$cacheDBM = static::getDBFinal();
     }
 
     /**
@@ -112,21 +119,21 @@ abstract class Etalon2
      *
      * @return Database
      */
-    abstract protected static function getDBMFinal(): Database;
+    abstract protected static function getDBFinal(): Database;
 
     /**
      *
      *
-     * @param string(integer) $id
+     * @param int $id
      * @return static
      * @throws \Exception
      * @throws ExceptionEtalonParameterError
      */
-    public static function getInstanceByID(string $id): self
+    public static function getInstanceByID(int $id)
     {
-        $dbm = static::getDBM();
+        $dbm = static::getDB();
         $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($id);
-        $row = $dbm->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        $row = $dbm->query($sql)->fetch();
         if ($row === false) {
             throw new ExceptionEtalonParameterError('id = "' . $id . '"');
         }
@@ -138,10 +145,10 @@ abstract class Etalon2
      * create instance from database row (array)
      * you can override for differentiate your class
      *
-     * @param string[] $row
-     * @return self
+     * @param array $row
+     * @return static
      */
-    public static function getInstanceFromRow($row): self
+    public static function getInstanceFromRow($row)
     {
         return static::getInstanceFromRowBase($row);
     }
@@ -149,10 +156,10 @@ abstract class Etalon2
     /**
      * create instance from database row (array)
      *
-     * @param string[] $row
+     * @param array $row
      * @return self
      */
-    protected static function getInstanceFromRowBase($row): self
+    protected static function getInstanceFromRowBase($row)
     {
         $_t = new static;
         if (!$row) {
@@ -188,8 +195,8 @@ abstract class Etalon2
      */
     public function reloadDBCache()
     {
-        $dbm = static::getDBM();
-        $row = $dbm->query("SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($this->id))->fetch(\PDO::FETCH_ASSOC);
+        $dbm = static::getDB();
+        $row = $dbm->query("SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($this->id))->fetch();
         if ($row === false) {
             throw new \Exception('ID does not exist anymore: ' . $this->id);
         }
@@ -302,8 +309,8 @@ abstract class Etalon2
         $this->_newRecord = false;
         if (!$this->exists()) {
             if ($insert) {
-                $this->onBeforeInsert(); //kivételt dobhat
-                $this->insert();//kivételt dobhat
+                $this->onBeforeInsert();
+                $this->insert();
                 return;
             } else {
                 throw new \Exception('insert not allowed');
@@ -325,7 +332,7 @@ abstract class Etalon2
         foreach ($_changed as $col => $change0) {
             $update[$col] = $change0[1];
         }
-        $dbm = static::getDBM();
+        $dbm = static::getDB();
         $dbm->update($update)->table(static::TABLE)->where(static::COL_ID, '=', $this->id)->execute();
         // sikerült, updateljük a saját cachet.
         foreach ($update as $col => $val) {
@@ -354,7 +361,7 @@ abstract class Etalon2
         if (isset($this->id_to_set)) {
             $insert[static::COL_ID] = $this->id_to_set;
         }
-        $this->id = static::getDBM()->insert($insert)->into(static::TABLE)->execute(true);
+        $this->id = (int)static::getDB()->insert($insert)->into(static::TABLE)->execute(true);
         // every column is changed.
         $this->saveDiff = [];
         foreach (static::$dbColumns as $col) {
@@ -389,7 +396,11 @@ abstract class Etalon2
      */
     public function getDebugTitle(): string
     {
-        return $this->id;
+        if ($this->exists()) {
+            return (string)$this->id;
+        } else {
+            return '[NEW]';
+        }
     }
 
     /**
@@ -398,7 +409,7 @@ abstract class Etalon2
      * @param \static $old
      * @return \static
      */
-    public static function getInstanceNewFromExisting(self $old): self
+    public static function getInstanceNewFromExisting(self $old)
     {
         $t = new static;
         foreach (static::$dbColumns as $col) {
@@ -492,10 +503,10 @@ abstract class Etalon2
      *
      * @param string $criteria_key
      * @param string $key
-     * @return \static
+     * @return static
      * @throws \Exception
      */
-    protected static function getInstanceFromCache(string $criteria_key, string $key): self
+    protected static function getInstanceFromCache(string $criteria_key, string $key)
     {
         if (!isset(static::$cacheByCriteria) || !array_key_exists($criteria_key, static::$cacheByCriteria)) {
             throw new \Exception('Empty cache on criteria key: ' . $criteria_key);
@@ -505,6 +516,23 @@ abstract class Etalon2
         } else {
             throw new \Exception('Not found in cache: ' . $criteria_key . ':' . $key);
         }
+    }
+
+    public function delete()
+    {
+        $this->deleted = 1;
+        $this->save();
+        $this->onDelete();
+    }
+
+    /**
+     * event callback
+     *
+     * @abstract
+     */
+    protected function onDelete()
+    {
+
     }
 
     /**
@@ -519,7 +547,7 @@ abstract class Etalon2
         if (!$this->exists()) {
             return;
         }
-        $dbm = static::getDBM();
+        $dbm = static::getDB();
         $dbm->query('DELETE FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . "` = " . $dbm->quote($this->id));
         unset($this->id);
     }
@@ -529,7 +557,7 @@ abstract class Etalon2
      */
     public static function lockTable()
     {
-        static::getDBM()->query('LOCK TABLE ' . static::TABLE . ' WRITE');
+        static::getDB()->query('LOCK TABLE ' . static::TABLE . ' WRITE');
     }
 
     /**
@@ -537,7 +565,7 @@ abstract class Etalon2
      */
     public static function unlockTable()
     {
-        static::getDBM()->query('UNLOCK TABLES');
+        static::getDB()->query('UNLOCK TABLES');
     }
 
     /**
@@ -559,9 +587,9 @@ abstract class Etalon2
     }
 
     /**
-     * @param string $id
+     * @param int $id
      */
-    public function setId(string $id)
+    public function setId(int $id)
     {
         $this->id_to_set = $id;
     }
