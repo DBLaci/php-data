@@ -89,12 +89,6 @@ abstract class Etalon2
     public $saveDiff = [];
 
     /**
-     *
-     * @var Database
-     */
-    protected static $cacheDBM;
-
-    /**
      * insert sets to true
      *
      * @var boolean
@@ -106,20 +100,7 @@ abstract class Etalon2
      *
      * @return Database
      */
-    protected static function getDB(): Database
-    {
-        if (isset(static::$cacheDBM)) {
-            return static::$cacheDBM;
-        }
-        return static::$cacheDBM = static::getDBFinal();
-    }
-
-    /**
-     * @TODO DI container?
-     *
-     * @return Database
-     */
-    abstract protected static function getDBFinal(): Database;
+    abstract protected static function getDB(): Database;
 
     /**
      *
@@ -131,9 +112,9 @@ abstract class Etalon2
      */
     public static function getInstanceByID(int $id)
     {
-        $dbm = static::getDB();
-        $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($id);
-        $row = $dbm->query($sql)->fetch();
+        $db = static::getDB();
+        $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $db->quote($id);
+        $row = $db->query($sql)->fetch();
         if ($row === false) {
             throw new ExceptionEtalonParameterError('id = "' . $id . '"');
         }
@@ -195,8 +176,8 @@ abstract class Etalon2
      */
     public function reloadDBCache()
     {
-        $dbm = static::getDB();
-        $row = $dbm->query("SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $dbm->quote($this->id))->fetch();
+        $db = static::getDB();
+        $row = $db->query("SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $db->quote($this->id))->fetch();
         if ($row === false) {
             throw new \Exception('ID does not exist anymore: ' . $this->id);
         }
@@ -332,8 +313,8 @@ abstract class Etalon2
         foreach ($_changed as $col => $change0) {
             $update[$col] = $change0[1];
         }
-        $dbm = static::getDB();
-        $dbm->update($update)->table(static::TABLE)->where(static::COL_ID, '=', $this->id)->execute();
+        $db = static::getDB();
+        $db->update($update)->table(static::TABLE)->where(static::COL_ID, '=', $this->id)->execute();
         // sikerült, updateljük a saját cachet.
         foreach ($update as $col => $val) {
             $this->dbCache[$col] = $val;
@@ -547,8 +528,8 @@ abstract class Etalon2
         if (!$this->exists()) {
             return;
         }
-        $dbm = static::getDB();
-        $dbm->query('DELETE FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . "` = " . $dbm->quote($this->id));
+        $db = static::getDB();
+        $db->query('DELETE FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . "` = " . $db->quote($this->id));
         unset($this->id);
     }
 
@@ -557,7 +538,7 @@ abstract class Etalon2
      */
     public static function lockTable()
     {
-        static::getDB()->query('LOCK TABLE ' . static::TABLE . ' WRITE');
+        static::getDB()->exec('LOCK TABLE ' . static::TABLE . ' WRITE');
     }
 
     /**
@@ -565,7 +546,7 @@ abstract class Etalon2
      */
     public static function unlockTable()
     {
-        static::getDB()->query('UNLOCK TABLES');
+        static::getDB()->exec('UNLOCK TABLES');
     }
 
     /**
