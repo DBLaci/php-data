@@ -281,8 +281,8 @@ abstract class Etalon2
      *
      * @param boolean $insert if you want to insert on not existing you have to set to true. this is to prevent accidental inserts
      *
-     * @throws \Exception
      * @return void
+     * @throws \Exception
      */
     public function save(bool $insert = false)
     {
@@ -517,11 +517,22 @@ abstract class Etalon2
     }
 
     /**
+     * set properties to default values (after delete for example)
+     */
+    protected function resetValues()
+    {
+        $x = new static;
+        foreach (static::$dbColumns as $col) {
+            $this->$col = $x->$col;
+        }
+    }
+
+    /**
      * delete from table.
      * deleting non inserted is not error.
      *
-     * @throws \Exception
      * @return void
+     * @throws \Exception
      */
     public function deleteFromDB()
     {
