@@ -172,16 +172,27 @@ abstract class Etalon2
     /**
      * you can reload the data from database if you know there are changes.
      *
+     * @param bool $updateProperties update properties from database. You can disable this to keep current values
+     * @return self
      * @throws \Exception
      */
-    public function reloadDBCache()
+    public function reloadDBCache(bool $updateProperties = true): self
     {
         $db = static::getDB();
-        $row = $db->query("SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $db->quote($this->id))->fetch();
+        $row = $db->query('SELECT * FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . '` = ' . $db->quote($this->id))->fetch();
         if ($row === false) {
             throw new \Exception('ID does not exist anymore: ' . $this->id);
         }
+        if ($updateProperties) {
+            foreach (static::$dbColumns as $col) {
+                if ($col !== static::COL_ID) {
+                    $this->$col = $row[$col];
+                }
+            }
+        }
         $this->dbCache = $row;
+        $this->onDBLoad();
+        return $this;
     }
 
     /**
@@ -189,7 +200,7 @@ abstract class Etalon2
      *
      * @return bool
      */
-    private function hasUpdatedAtColumn(): bool
+    protected function hasUpdatedAtColumn(): bool
     {
         return in_array('updated_at', static::$dbColumns);
     }
@@ -199,7 +210,7 @@ abstract class Etalon2
      *
      * @return bool
      */
-    private function hasCreatedAtColumn(): bool
+    protected function hasCreatedAtColumn(): bool
     {
         return in_array('created_at', static::$dbColumns);
     }
@@ -315,7 +326,7 @@ abstract class Etalon2
         }
         $db = static::getDB();
         $db->update($update)->table(static::TABLE)->where(static::COL_ID, '=', $this->id)->execute();
-        // sikerült, updateljük a saját cachet.
+        // update cache - we assume the changes were made.
         foreach ($update as $col => $val) {
             $this->dbCache[$col] = $val;
         }
@@ -464,7 +475,7 @@ abstract class Etalon2
     protected function cacheStore()
     {
         if (!isset(static::$cacheCriteriaList)) {
-            return; //nemgond, csak kész.
+            return; // nemgond, csak kész.
         }
         foreach (static::$cacheCriteriaList as $criteria) {
             $criteria_key = implode('.', $criteria);
