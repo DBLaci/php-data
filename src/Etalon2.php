@@ -89,11 +89,18 @@ abstract class Etalon2
     public $saveDiff = [];
 
     /**
-     * insert sets to true
+     * true when insert occured
      *
-     * @var boolean
+     * @var bool
      */
     protected $_newRecord = false;
+
+    /**
+     * updated_at / created_at date updated automatically if this is true
+     *
+     * @var bool
+     */
+    protected $dateTriggersEnabled = true;
 
     /**
      * the database connection
@@ -170,6 +177,14 @@ abstract class Etalon2
     }
 
     /**
+     * disables the automatic updated_at / created_at setters
+     */
+    public function disableDateTriggers()
+    {
+        $this->dateTriggersEnabled = false;
+    }
+
+    /**
      * you can reload the data from database if you know there are changes.
      *
      * @param bool $updateProperties update properties from database. You can disable this to keep current values
@@ -224,7 +239,7 @@ abstract class Etalon2
      */
     protected function onBeforeInsert()
     {
-        if ($this->hasCreatedAtColumn()) {
+        if ($this->dateTriggersEnabled && $this->hasCreatedAtColumn()) {
             $this->created_at = date('Y-m-d H:i:s');
         }
     }
@@ -269,7 +284,7 @@ abstract class Etalon2
      */
     protected function onChangeBeforeSave(): bool
     {
-        if ($this->hasUpdatedAtColumn()) {
+        if ($this->dateTriggersEnabled && $this->hasUpdatedAtColumn()) {
             $this->updated_at = date('Y-m-d H:i:s');
             return true;
         }
