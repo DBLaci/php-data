@@ -114,7 +114,6 @@ abstract class Etalon2
      *
      * @param int $id
      * @return static
-     * @throws \Exception
      * @throws ExceptionEtalonParameterError
      */
     public static function getInstanceByID(int $id)
@@ -189,14 +188,14 @@ abstract class Etalon2
      *
      * @param bool $updateProperties update properties from database. You can disable this to keep current values
      * @return self
-     * @throws \Exception
+     * @throws ExceptionEtalonParameterError
      */
     public function reloadDBCache(bool $updateProperties = true): self
     {
         $db = static::getDB();
         $row = $db->query('SELECT * FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . '` = ' . $db->quote($this->id))->fetch();
         if ($row === false) {
-            throw new \Exception('ID does not exist anymore: ' . $this->id);
+            throw new ExceptionEtalonParameterError('ID does not exist anymore: ' . $this->id);
         }
         if ($updateProperties) {
             foreach (static::$dbColumns as $col) {
@@ -234,8 +233,6 @@ abstract class Etalon2
      * you can code validation here if you want before inserting
      *
      * @abstract
-     *
-     * @throws \Exception
      */
     protected function onBeforeInsert()
     {
@@ -280,7 +277,6 @@ abstract class Etalon2
      * but don't return false if the parent returns false - if other changes were made.
      *
      * @return boolean must return true if changes were made!
-     * @throws \Exception throw error if you want, for example for validation purposes
      */
     protected function onChangeBeforeSave(): bool
     {
@@ -308,7 +304,7 @@ abstract class Etalon2
      * @param boolean $insert if you want to insert on not existing you have to set to true. this is to prevent accidental inserts
      *
      * @return void
-     * @throws \Exception
+     * @throws EtalonInsertNotAllowedException
      */
     public function save(bool $insert = false)
     {
@@ -320,7 +316,7 @@ abstract class Etalon2
                 $this->insert();
                 return;
             } else {
-                throw new \Exception('insert not allowed');
+                throw new EtalonInsertNotAllowedException('insert not allowed');
             }
         }
 
@@ -350,8 +346,6 @@ abstract class Etalon2
 
     /**
      * inserts data to database
-     *
-     * @throws \Exception
      */
     private function insert()
     {
@@ -511,17 +505,17 @@ abstract class Etalon2
      * @param string $criteria_key
      * @param string $key
      * @return static
-     * @throws \Exception
+     * @throws ExceptionEtalonParameterError
      */
     protected static function getInstanceFromCache(string $criteria_key, string $key)
     {
         if (!isset(static::$cacheByCriteria) || !array_key_exists($criteria_key, static::$cacheByCriteria)) {
-            throw new \Exception('Empty cache on criteria key: ' . $criteria_key);
+            throw new ExceptionEtalonParameterError('Empty cache on criteria key: ' . $criteria_key);
         }
         if (array_key_exists($key, static::$cacheByCriteria[$criteria_key])) {
             return static::$cacheByCriteria[$criteria_key][$key];
         } else {
-            throw new \Exception('Not found in cache: ' . $criteria_key . ':' . $key);
+            throw new ExceptionEtalonParameterError('Not found in cache: ' . $criteria_key . ':' . $key);
         }
     }
 
@@ -558,7 +552,6 @@ abstract class Etalon2
      * deleting non inserted is not error.
      *
      * @return void
-     * @throws \Exception
      */
     public function deleteFromDB()
     {
@@ -591,7 +584,7 @@ abstract class Etalon2
      * you don't want to use this without save - thus the exception is thrown.
      *
      * @return boolean
-     * @throws \Exception
+     * @throws ExceptionEtalonParameterError
      */
     public function isInserted(): bool
     {
@@ -599,7 +592,7 @@ abstract class Etalon2
             return true;
         }
         if (!$this->exists()) {
-            throw new \Exception('no insert was called (or failed)!');
+            throw new ExceptionEtalonParameterError('no insert was called (or failed)!');
         }
         return false;
     }
