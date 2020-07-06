@@ -5,7 +5,7 @@ namespace DBLaci\Data;
 use Pb\PDO\Database;
 
 /**
- * Description of Etalon
+ * Generic model class
  *
  * @author DBLaci
  */
@@ -89,7 +89,7 @@ abstract class Etalon2
     public $saveDiff = [];
 
     /**
-     * true when insert occured
+     * true when insert occured on last save
      *
      * @var bool
      */
@@ -110,8 +110,6 @@ abstract class Etalon2
     abstract protected static function getDB(): Database;
 
     /**
-     *
-     *
      * @param int $id
      * @return static
      * @throws ExceptionEtalonParameterError
@@ -159,7 +157,7 @@ abstract class Etalon2
                 $_t->$col = $row[$col];
             }
         }
-        $_t->dbCache = $row; //nyersanyag
+        $_t->dbCache = $row; // raw
         $_t->onDBLoad();
         $_t->cacheStore();
         return $_t;
@@ -231,8 +229,6 @@ abstract class Etalon2
 
     /**
      * you can code validation here if you want before inserting
-     *
-     * @abstract
      */
     protected function onBeforeInsert()
     {
@@ -263,6 +259,7 @@ abstract class Etalon2
     }
 
     /**
+     * check if save would do anything
      *
      * @return bool
      */
@@ -519,6 +516,9 @@ abstract class Etalon2
         }
     }
 
+    /**
+     * @throws EtalonInsertNotAllowedException
+     */
     public function delete()
     {
         $this->deleted = 1;
@@ -529,7 +529,7 @@ abstract class Etalon2
     /**
      * event callback
      *
-     * @abstract
+     * @abstract - not really, but you can override if needed
      */
     protected function onDelete()
     {
@@ -584,7 +584,7 @@ abstract class Etalon2
      * you don't want to use this without save - thus the exception is thrown.
      *
      * @return boolean
-     * @throws ExceptionEtalonParameterError
+     * @throws EtalonInvalidCallException
      */
     public function isInserted(): bool
     {
@@ -592,7 +592,7 @@ abstract class Etalon2
             return true;
         }
         if (!$this->exists()) {
-            throw new ExceptionEtalonParameterError('no insert was called (or failed)!');
+            throw new EtalonInvalidCallException('no insert was called (or failed)!');
         }
         return false;
     }
