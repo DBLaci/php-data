@@ -112,7 +112,7 @@ abstract class Etalon2
     /**
      * @param int $id
      * @return static
-     * @throws ExceptionEtalonParameterError
+     * @throws EtalonInstantiationException
      */
     public static function getInstanceByID(int $id)
     {
@@ -120,7 +120,7 @@ abstract class Etalon2
         $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $db->quote($id);
         $row = $db->query($sql)->fetch();
         if ($row === false) {
-            throw new ExceptionEtalonParameterError('id = "' . $id . '"');
+            throw new EtalonInstantiationException('id = "' . $id . '"');
         }
         $t = static::getInstanceFromRow($row);
         return $t;
@@ -186,14 +186,14 @@ abstract class Etalon2
      *
      * @param bool $updateProperties update properties from database. You can disable this to keep current values
      * @return self
-     * @throws ExceptionEtalonParameterError
+     * @throws EtalonInstantiationException
      */
     public function reloadDBCache(bool $updateProperties = true): self
     {
         $db = static::getDB();
         $row = $db->query('SELECT * FROM ' . static::TABLE . ' WHERE `' . static::COL_ID . '` = ' . $db->quote($this->id))->fetch();
         if ($row === false) {
-            throw new ExceptionEtalonParameterError('ID does not exist anymore: ' . $this->id);
+            throw new EtalonInstantiationException('ID does not exist anymore: ' . $this->id);
         }
         if ($updateProperties) {
             foreach (static::$dbColumns as $col) {
@@ -502,17 +502,17 @@ abstract class Etalon2
      * @param string $criteria_key
      * @param string $key
      * @return static
-     * @throws ExceptionEtalonParameterError
+     * @throws EtalonInstantiationException
      */
     protected static function getInstanceFromCache(string $criteria_key, string $key)
     {
         if (!isset(static::$cacheByCriteria) || !array_key_exists($criteria_key, static::$cacheByCriteria)) {
-            throw new ExceptionEtalonParameterError('Empty cache on criteria key: ' . $criteria_key);
+            throw new EtalonInstantiationException('Empty cache on criteria key: ' . $criteria_key);
         }
         if (array_key_exists($key, static::$cacheByCriteria[$criteria_key])) {
             return static::$cacheByCriteria[$criteria_key][$key];
         } else {
-            throw new ExceptionEtalonParameterError('Not found in cache: ' . $criteria_key . ':' . $key);
+            throw new EtalonInstantiationException('Not found in cache: ' . $criteria_key . ':' . $key);
         }
     }
 
