@@ -68,7 +68,7 @@ abstract class Etalon2
     /**
      * you can set the needed id on insert. this is bad practice tough.
      *
-     * @var int
+     * @var ?int
      */
     protected ?int $id_to_set = null;
 
@@ -247,7 +247,7 @@ abstract class Etalon2
         $this->saveDiff = [];
         foreach (static::$dbColumns as $col) {
             if ($col === static::COL_ID) {
-                $data = $this->id;
+                $data = isset($this->id) ? $this->id : null;
             } else {
                 $data = isset($this->$col) ? $this->col : null; // php 7.4 uninitialized
             }
@@ -372,7 +372,7 @@ abstract class Etalon2
             if ($col === static::COL_ID) {
                 $data = $this->id;
             } else {
-                $data = $this->$col;
+                $data = isset($this->$col) ? $this->col : null;
             }
             if (!is_null($data)) {
                 $this->saveDiff[$col] = [null, $data];
@@ -401,7 +401,7 @@ abstract class Etalon2
     public function getDebugTitle(): string
     {
         if ($this->exists()) {
-            return (string)$this->id;
+            return (string) $this->id;
         } else {
             return '[NEW]';
         }
