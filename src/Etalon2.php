@@ -549,7 +549,11 @@ abstract class Etalon2
     {
         $x = new static;
         foreach (static::$dbColumns as $col) {
-            $this->$col = $x->$col;
+            if (!isset($x->$col)) {
+                unset($this->$col);
+            } else {
+                $this->$col = $x->$col;
+            }
         }
     }
 
