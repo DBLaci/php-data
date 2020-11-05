@@ -249,7 +249,7 @@ abstract class Etalon2
             if ($col === static::COL_ID) {
                 $data = isset($this->id) ? $this->id : null;
             } else {
-                $data = isset($this->$col) ? $this->col : null; // php 7.4 uninitialized
+                $data = isset($this->$col) ? $this->$col : null; // php 7.4 uninitialized
             }
             if ($data !== $this->dbCache[$col]) {
                 $this->saveDiff[$col] = [$this->dbCache[$col], $data];
@@ -372,7 +372,7 @@ abstract class Etalon2
             if ($col === static::COL_ID) {
                 $data = $this->id;
             } else {
-                $data = isset($this->$col) ? $this->col : null;
+                $data = isset($this->$col) ? $this->$col : null;
             }
             if (!is_null($data)) {
                 $this->saveDiff[$col] = [null, $data];
