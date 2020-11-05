@@ -77,7 +77,7 @@ abstract class Etalon2
      *
      * @var array
      */
-    protected array $dbCache;
+    protected array $dbCache = [];
 
     /**
      * Contains the saved or to be saved columns and old/new data - can contain zero element.
