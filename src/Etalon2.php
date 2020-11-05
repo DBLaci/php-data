@@ -32,26 +32,26 @@ abstract class Etalon2
      *
      * @var int
      */
-    public $id;
+    public int $id;
     /**
      * add to dbColumns if you want this to be set automatically
      *
      * @var string|null timestamp default null
      */
-    protected $created_at;
+    protected ?string $created_at;
     /**
      * add to dbColumns if you want this to be set automatically
      *
      * @var string|null timestamp default null
      */
-    protected $updated_at;
+    protected ?string $updated_at;
 
     /**
      * soft delete bool
      *
      * @var int
      */
-    protected $deleted = 0;
+    protected int $deleted = 0;
 
     /**
      * table columns
@@ -61,7 +61,7 @@ abstract class Etalon2
      *
      * @var string[]
      */
-    public static $dbColumns = [
+    public static array $dbColumns = [
         'id',
     ];
 
@@ -70,14 +70,14 @@ abstract class Etalon2
      *
      * @var int
      */
-    protected $id_to_set;
+    protected ?int $id_to_set = null;
 
     /**
      * the database state (as we know)
      *
      * @var array
      */
-    protected $dbCache;
+    protected array $dbCache;
 
     /**
      * Contains the saved or to be saved columns and old/new data - can contain zero element.
@@ -86,21 +86,21 @@ abstract class Etalon2
      *   ...
      * ],
      */
-    public $saveDiff = [];
+    public array $saveDiff = [];
 
     /**
      * true when insert occured on last save
      *
      * @var bool
      */
-    protected $_newRecord = false;
+    protected bool $_newRecord = false;
 
     /**
      * updated_at / created_at date updated automatically if this is true
      *
      * @var bool
      */
-    protected $dateTriggersEnabled = true;
+    protected bool $dateTriggersEnabled = true;
 
     /**
      * the database connection
@@ -240,16 +240,16 @@ abstract class Etalon2
     /**
      * returns the changes that would be saved
      *
-     * @return array üres vagy nem
+     * @return array [column -> [old, new], ...] can be empty
      */
-    public function savePreview()
+    public function savePreview(): array
     {
         $this->saveDiff = [];
         foreach (static::$dbColumns as $col) {
             if ($col === static::COL_ID) {
                 $data = $this->id;
             } else {
-                $data = $this->$col;
+                $data = isset($this->$col) ? $this->col : null; // php 7.4 uninitialized
             }
             if ($data !== $this->dbCache[$col]) {
                 $this->saveDiff[$col] = [$this->dbCache[$col], $data];
@@ -265,7 +265,7 @@ abstract class Etalon2
      */
     public function isChanged(): bool
     {
-        return count($this->savePreview()) > 0;
+        return count($this->savePreview()) !== 0;
     }
 
     /**
@@ -292,7 +292,6 @@ abstract class Etalon2
      */
     protected function onChangeAfterSave(array $changeList)
     {
-
     }
 
     /**
@@ -305,25 +304,26 @@ abstract class Etalon2
      */
     public function save(bool $insert = false)
     {
-        $_changed = $this->savePreview();// fill saveDiff (used by insert!)
-        $this->_newRecord = false;
+        $_changed = $this->savePreview(); // fill saveDiff (used by insert!)
         if (!$this->exists()) {
             if ($insert) {
-                $this->onBeforeInsert();
                 $this->insert();
                 return;
             } else {
                 throw new EtalonInsertNotAllowedException('insert not allowed');
             }
         }
+        $this->_newRecord = false;
 
         //van bármi változás? ha nincs, akkor kész (és siker)
-        if (!count($_changed)) {
+        if (count($_changed) === 0) {
             return;
         }
         if ($this->onChangeBeforeSave()) {
-            //újraszámoljuk a changelogot
-            if (!($_changed = $this->savePreview())) {
+            // recalculate changes
+            $_changed = $this->savePreview();
+            if (count($_changed) === 0) {
+                // there is a chance changes were revoked.
                 return;
             }
         }
@@ -343,10 +343,16 @@ abstract class Etalon2
 
     /**
      * inserts data to database
+     *
+     * @throws EtalonInsertNotAllowedException
      */
-    private function insert()
+    public function insert()
     {
-        $this->onChangeBeforeSave(); // every insert is an update
+        if ($this->exists()) {
+            throw new EtalonInsertNotAllowedException('Already exists. id: ' . $this->id);
+        }
+        $this->onBeforeInsert();
+        $this->onChangeBeforeSave(); // every insert is an update also
         $insert = [];
         foreach (static::$dbColumns as $col) {
             if ($col === static::COL_ID) {
@@ -359,7 +365,7 @@ abstract class Etalon2
         if (isset($this->id_to_set)) {
             $insert[static::COL_ID] = $this->id_to_set;
         }
-        $this->id = (int)static::getDB()->insert($insert)->into(static::TABLE)->execute(true);
+        $this->id = (int) static::getDB()->insert($insert)->into(static::TABLE)->execute(true);
         // every column is changed.
         $this->saveDiff = [];
         foreach (static::$dbColumns as $col) {
@@ -404,8 +410,8 @@ abstract class Etalon2
     /**
      * create an uninserted new instance from existing data
      *
-     * @param \static $old
-     * @return \static
+     * @param static $old
+     * @return static
      */
     public static function getInstanceNewFromExisting(self $old)
     {
@@ -442,7 +448,7 @@ abstract class Etalon2
      *
      * @var array[]
      */
-    protected static $cacheCriteriaList;
+    protected static array $cacheCriteriaList;
 
     /**
      * cache content grouped by cache type
@@ -457,7 +463,7 @@ abstract class Etalon2
      *
      * @var array[]
      */
-    protected static $cacheByCriteria;
+    protected static array $cacheByCriteria;
 
     /**
      * disable caching (for this run)
@@ -588,7 +594,7 @@ abstract class Etalon2
      */
     public function isInserted(): bool
     {
-        if ($this->_newRecord === true) {
+        if ($this->_newRecord) {
             return true;
         }
         if (!$this->exists()) {
