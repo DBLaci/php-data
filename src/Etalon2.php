@@ -151,6 +151,12 @@ abstract class Etalon2
             return $_t;
         }
         foreach (static::$dbColumns as $col) {
+            if (!array_key_exists($col, $row)) {
+                // it is possible that in the db row the column is missing (yet).
+                // in this case, we keep the property as is, it might have a sane default.
+                // altough this is an inconsistency between the property and the column list!
+                continue;
+            }
             if ($col === static::COL_ID) {
                 $_t->id = $row[$col];
             } else {
