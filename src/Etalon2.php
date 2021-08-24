@@ -142,7 +142,7 @@ abstract class Etalon2
      * create instance from database row (array)
      *
      * @param array $row
-     * @return self
+     * @return static
      */
     protected static function getInstanceFromRowBase($row)
     {
