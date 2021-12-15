@@ -273,7 +273,9 @@ abstract class Etalon2
             } else {
                 $data = isset($this->$col) ? $this->$col : null; // php 7.4 uninitialized
             }
-            if ($data !== $this->dbCache[$col] && array_key_exists($col, $this->dbCache)) {
+            if (!$this->exists() && $data !== null) {
+                $this->saveDiff[$col] = [$this->dbCache[$col], $data];
+            } elseif ($data !== $this->dbCache[$col] && array_key_exists($col, $this->dbCache)) {
                 // Only changed if it exists in the cache and differs
                 $this->saveDiff[$col] = [$this->dbCache[$col], $data];
             }
@@ -327,7 +329,6 @@ abstract class Etalon2
      */
     public function save(bool $insert = false)
     {
-        $_changed = $this->savePreview(); // fill saveDiff (used by insert!)
         if (!$this->exists()) {
             if ($insert) {
                 $this->insert();
@@ -337,6 +338,7 @@ abstract class Etalon2
             }
         }
         $this->_newRecord = false;
+        $_changed = $this->savePreview(); // fill saveDiff (used by insert!)
 
         //van bármi változás? ha nincs, akkor kész (és siker)
         if (count($_changed) === 0) {
