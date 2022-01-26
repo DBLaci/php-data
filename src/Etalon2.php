@@ -317,7 +317,8 @@ abstract class Etalon2
      */
     protected function onChangeAfterSave(array $changeList)
     {
-        if (in_array(strtolower(History::class), class_uses($this), true)) {
+        // Detect HistoryAbstract trait - trait detection is hard when the class has extends, so we check the method for existence
+        if (method_exists($this, 'logChangesToHistory')) {
             /** @var $this Etalon2|History */
             $this->logChangesToHistory($changeList);
         }
