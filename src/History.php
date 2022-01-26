@@ -2,7 +2,13 @@
 
 namespace DBLaci\Data;
 
-trait History
+/**
+ * history trait for Etalon class
+ *
+ * Please implement abstract method in project trait, and use that trait. Not this one directly as you don't want to implement
+ * history saving in every Etalon class!
+ */
+trait HistoryAbstract
 {
     /**
      * Ignore key list.
@@ -29,7 +35,7 @@ trait History
 
         $filteredChangeList = [];
         foreach ($changeList as $col => $values) {
-            if (in_array($col, $ignoreKeys)) {
+            if (in_array($col, $ignoreKeys, true)) {
                 continue;
             }
 
@@ -40,7 +46,7 @@ trait History
     }
 
     /**
-     * Save changes to history.
+     * Save changes to history. See example history SQL!
      */
     abstract protected function saveToHistory(array $changeList): void;
 }
