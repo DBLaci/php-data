@@ -317,6 +317,10 @@ abstract class Etalon2
      */
     protected function onChangeAfterSave(array $changeList)
     {
+        if (in_array(strtolower(History::class), class_uses($this), true)) {
+            /** @var $this Etalon2|History */
+            $this->logChangesToHistory($changeList);
+        }
     }
 
     /**
