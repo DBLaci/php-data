@@ -576,11 +576,9 @@ abstract class Etalon2
     }
 
     /**
-     * event callback
-     *
      * @return bool
      */
-    protected function isDeleted(): bool
+    public function isDeleted(): bool
     {
         if ($this->hasDeletedAtColumn()) {
             return $this->deleted_at !== null;
