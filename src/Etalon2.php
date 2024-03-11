@@ -82,7 +82,7 @@ abstract class Etalon2
     /**
      * the database state (as we know)
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected array $dbCache = [];
 
@@ -97,15 +97,11 @@ abstract class Etalon2
 
     /**
      * true when insert occured on last save
-     *
-     * @var bool
      */
     protected bool $_newRecord = false;
 
     /**
      * updated_at / created_at date updated automatically if this is true
-     *
-     * @var bool
      */
     protected bool $dateTriggersEnabled = true;
 
@@ -127,7 +123,7 @@ abstract class Etalon2
         $sql = "SELECT * FROM " . static::TABLE . " WHERE `" . static::COL_ID . "` = " . $db->quote($id);
         $row = $db->query($sql)->fetch();
         if ($row === false) {
-            throw new EtalonInstantiationException('id = "' . $id . '"');
+            throw new EtalonInstantiationException(static::TABLE . '.' . static::COL_ID . ' = "' . $id . '"');
         }
         return static::getInstanceFromRow($row);
     }
@@ -182,7 +178,6 @@ abstract class Etalon2
      */
     public function onDBLoad()
     {
-
     }
 
     /**
@@ -572,7 +567,6 @@ abstract class Etalon2
      */
     protected function onDelete()
     {
-
     }
 
     /**
